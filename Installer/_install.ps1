@@ -4,16 +4,23 @@
 # Changelog
 # 0.1 12/19/17
 # - Support for unzipping oblivion online.
+# - Implement a variable to name the segment of script we're at so that Function Unzip can tell us where something failed.
+
+# 0.2 12/19/17
+# - Change for cleanup to Source and Extract Folders
+# - Implement support for unzipping several other sources.
 
 # To-Do
 # Implement elevation checks if needed
-# Implement a variable to name the segment of script we're at so that Function Unzip can tell us where something failed.
+# Fix folders getting nammed .zip. Not really an issue, but will get confusing later.
+
 
 ##### Begin Script! #####
 
 #Define Global Variables
 $ScriptLocation = (Get-Item -Path ".\" -Verbose).FullName
-Write-Host "DEBUG: Path is $ScriptLocation"`n -ForegroundColor Cyan
+$SourceLocation = (Get-Item -Path ".\Source\" -Verbose).FullName
+$ExtractLocation = (Get-Item -Path ".\Extract\" -Verbose).FullName
 
 #Set .net to the current working script directory
 [Environment]::CurrentDirectory = $ScriptLocation
@@ -39,24 +46,29 @@ if ($ZipFile -eq $false -OR $UnzipLocation -eq $false){
 	break;
 	}
 else {
-# Run the uncompress command, surpress errors.
+	try 
+	{
+	# Run the uncompress command, surpress errors.
 	[io.compression.zipfile]::ExtractToDirectory($ZipFile, $UnzipLocation) | out-null
+	# Set UnzipStep to $LastSuccessfulUnzipStep
+	$LastSuccessfulUnzipStep = $UnzipStep
 	}
+	catch
+		{
+		#There was an error extracting.
+		Write-Host "An error occured. Please report the following information:" -ForegroundColor Red
+		Write-Host "$LastSuccessfulUnzipStep" -ForegroundColor Yellow
+		break;
+		}
+	}
+
 }
 
-# Extract Oblivion Online
-# Define variables we need for the Unzip function.
-$UnzipStep = "Step: Extract Oblivion Online"
-$ZipFile = "$ScriptLocation\OblivionOnline1.8.zip"
-$UnzipLocation = '.\OblivionOnline'
-# Run the unzip function above
-Unzip
-
-#Execute OblivionOnline
-Write-Host `n"Executing Oblivion Online Now. Follow the onscreen prompts. This may take a moment to run." -ForegroundColor Yellow
-& .\OblivionOnline\OblivionOnline.exe
-Write-Host "Press a key to continue..." -ForegroundColor Yellow
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-
-### Next Please ###
-# For the next extract we just repopulate the variables and run the function again.
+# For each for every zip in the Source Location, set variables and run the unzip function.
+Get-ChildItem $SourceLocation -Filter *.zip | Foreach-Object {
+	$UnzipStep = $_
+	$ZipFile = "$SourceLocation$_"
+	$UnzipLocation = "$ExtractLocation$_"
+	Unzip
+	}
+	
