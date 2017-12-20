@@ -7,7 +7,7 @@
 
 # To-Do
 # Implement elevation checks if needed
-
+# Implement a variable to name the segment of script we're at so that Function Unzip can tell us where something failed.
 
 ##### Begin Script! #####
 
@@ -26,12 +26,16 @@ Add-Type -assembly "system.io.compression.filesystem"
 New-Item -ItemType Directory -Force -Path $UnzipLocation | out-null
 # Fail if the script cannot find the file to unzip.
 if ($ZipFile -eq $false){
-	Write-Host "The script cannot find a needed file. :(" -ForegroundColor Red
+	Write-Host "The script cannot find a needed file." -ForegroundColor Red
+	Write-Host "This is most likey a script error. Please report the following info:"`n -ForegroundColor Red
+	Write-Host "$UnzipStep" `n -ForegroundColor Yellow
 	break;
 	}
 # Fail if the script did not populate the needed variables.
 if ($ZipFile -eq $false -OR $UnzipLocation -eq $false){
 	Write-Host "There was a scripting error, and a file we need to unzip was NOT specified." -ForegroundColor Red
+	Write-Host "This is most likey a script error. Please report the following info:"`n -ForegroundColor Red
+	Write-Host "$UnzipStep"`n -ForegroundColor Yellow
 	break;
 	}
 else {
@@ -41,8 +45,11 @@ else {
 }
 
 # Extract Oblivion Online
+# Define variables we need for the Unzip function.
+$UnzipStep = "Step: Extract Oblivion Online"
 $ZipFile = "$ScriptLocation\OblivionOnline1.8.zip"
 $UnzipLocation = '.\OblivionOnline'
+# Run the unzip function above
 Unzip
 
 #Execute OblivionOnline
@@ -50,3 +57,6 @@ Write-Host `n"Executing Oblivion Online Now. Follow the onscreen prompts. This m
 & .\OblivionOnline\OblivionOnline.exe
 Write-Host "Press a key to continue..." -ForegroundColor Yellow
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
+### Next Please ###
+# For the next extract we just repopulate the variables and run the function again.
